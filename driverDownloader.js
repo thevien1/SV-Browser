@@ -1,0 +1,141 @@
+const fs = require('fs');
+const path = require('path');
+const { spawn, spawnSync } = require('child_process');
+const DriverIconManager = require('./driverIconManager');
+
+class DriverDownloader {
+  constructor(baseDir) {
+    this.baseDir = baseDir || __dirname;
+    this.driversDir = path.join(this.baseDir, 'drivers');
+    this.iconManager = new DriverIconManager(this.baseDir);
+  }
+
+  /**
+   * Tự động tải, giải nén và nạp icon cho ChromiumCore từ link GitHub hoặc link trực tiếp
+   * @param {string} url - Link download chrome.7z hoặc link tag GitHub
+   * @param {function} onProgress - Callback tiến trình (string)
+   */
+  async downloadAndInstall(url, onProgress = console.log) {
+    if (!url || typeof url !== 'string') {
+      throw new Error('URL không hợp lệ');
+    }
+
+    let downloadUrl = url.trim();
+
+    // Nếu người dùng đưa link tag (releases/tag/v...), tự động chuyển thành link download chrome.7z
+    if (downloadUrl.includes('/releases/tag/')) {
+      downloadUrl = downloadUrl.replace('/releases/tag/', '/releases/download/') + '/chrome.7z';
+    }
+
+    // Trích xuất version từ URL (ví dụ: v153.0.8010.37 -> majorVersion: 153)
+    const versionMatch = downloadUrl.match(/v?(\d+)(\.\d+\.\d+\.\d+)?/i);
+    const majorVersion = versionMatch ? versionMatch[1] : 'latest';
+    const fullVersion = versionMatch && versionMatch[2] ? `${versionMatch[1]}${versionMatch[2]}` : `${majorVersion}.0.0.0`;
+
+    const folderName = `ChromiumCore_v${majorVersion}`;
+    const targetDir = path.join(this.driversDir, folderName);
+    const tempFile = path.join(this.driversDir, `temp_download_${Date.now()}.7z`);
+
+    if (!fs.existsSync(this.driversDir)) {
+      fs.mkdirSync(this.driversDir, { recursive: true });
+    }
+
+    onProgress(`[1/4] Đang tải Chromium Core v${majorVersion} từ:\n${downloadUrl}`);
+
+    // Sử dụng curl.exe có sẵn trên Windows để tải file siêu nhanh và hỗ trợ redirect
+    await new Promise((resolve, reject) => {
+      const curl = spawn('curl.exe', ['-L', '--fail', '-o', tempFile, downloadUrl], {
+        windowsHide: true
+      });
+
+      curl.stderr.on('data', (data) => {
+        // curl xuất tiến trình qua stderr
+        const str = data.toString();
+        if (str.includes('%') || str.includes('k') || str.includes('M')) {
+          onProgress(`[Tải xuống] ${str.trim().split('\r').pop()}`);
+        }
+      });
+
+      curl.on('close', (code) => {
+        if (code === 0 && fs.existsSync(tempFile) && fs.statSync(tempFile).size > 1024 * 1024) {
+          resolve();
+        } else {
+          if (fs.existsSync(tempFile)) try { fs.unlinkSync(tempFile); } catch (e) {}
+          reject(new Error(`Tải file thất bại (curl mã lỗi: ${code}). Hãy kiểm tra lại kết nối mạng hoặc link tải.`));
+        }
+      });
+
+      curl.on('error', (err) => reject(err));
+    });
+
+    onProgress(`[2/4] Đã tải xong (~${(fs.statSync(tempFile).size / (1024 * 1024)).toFixed(1)} MB). Đang giải nén vào ${folderName}...`);
+
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    // Sử dụng tar.exe của Windows 10/11 để giải nén .7z trực tiếp
+    const extractRes = spawnSync('tar.exe', ['-xf', tempFile, '-C', targetDir], {
+      encoding: 'utf8',
+      windowsHide: true
+    });
+
+    // Xóa file tạm sau khi giải nén
+    try { fs.unlinkSync(tempFile); } catch (e) {}
+
+    if (extractRes.status !== 0) {
+      throw new Error(`Lỗi giải nén: ${extractRes.stderr || 'tar.exe không giải nén được file'}`);
+    }
+
+    // Đảm bảo cấu trúc chuẩn Chrome-bin
+    const chromeBin = path.join(targetDir, 'Chrome-bin');
+    if (!fs.existsSync(chromeBin)) {
+      // Nếu tar giải nén các file trực tiếp vào targetDir thay vì Chrome-bin
+      if (fs.existsSync(path.join(targetDir, 'chrome.exe'))) {
+        fs.mkdirSync(chromeBin, { recursive: true });
+        const items = fs.readdirSync(targetDir);
+        for (const item of items) {
+          if (item === 'Chrome-bin') continue;
+          const oldPath = path.join(targetDir, item);
+          const newPath = path.join(chromeBin, item);
+          try { fs.renameSync(oldPath, newPath); } catch (e) {}
+        }
+      }
+    }
+
+    onProgress(`[3/4] Đang tự động nạp rcedit-x64.exe và áp dụng icon Google Chrome...`);
+    this.iconManager.syncAllDriverIcons();
+
+    const finalExe = path.join(targetDir, 'Chrome-bin', 'chrome.exe');
+    if (!fs.existsSync(finalExe)) {
+      throw new Error('Không tìm thấy chrome.exe sau khi giải nén!');
+    }
+
+    onProgress(`[4/4] Hoàn tất! Đã cài đặt thành công ${folderName} (Version ${fullVersion})`);
+    return {
+      success: true,
+      folderName,
+      version: fullVersion,
+      majorVersion,
+      path: finalExe
+    };
+  }
+}
+
+// Chạy trực tiếp từ dòng lệnh nếu được gọi: node driverDownloader.js <url>
+if (require.main === module) {
+  const targetUrl = process.argv[2] || 'https://github.com/Hibbiki/chromium-win64/releases/download/v153.0.8010.37-r1681091/chrome.7z';
+  console.log(`Bắt đầu tải và cài đặt ChromiumCore...`);
+  const downloader = new DriverDownloader(__dirname);
+  downloader.downloadAndInstall(targetUrl, (msg) => console.log(msg))
+    .then((res) => {
+      console.log('\n=== KẾT QUẢ CÀI ĐẶT ===');
+      console.log(JSON.stringify(res, null, 2));
+    })
+    .catch((err) => {
+      console.error('\nLỗi:', err.message);
+      process.exit(1);
+    });
+}
+
+module.exports = DriverDownloader;

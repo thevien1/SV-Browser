@@ -1,0 +1,29 @@
+{
+  "name": "sv-browser",
+  "version": "1.0.0",
+  "description": "SV Browser Antidetect Multi-Browser Profile Manager & Automation",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "keygen": "node licenseGen.js",
+    "build": "node scripts/build-protected.js",
+    "build:full": "node scripts/build-protected.js --include-drivers"
+  },
+  "keywords": [
+    "antidetect",
+    "browser",
+    "profile",
+    "automation",
+    "chrome",
+    "firefox",
+    "brave",
+    "edge"
+  ],
+  "author": "SV Browser Team",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
+    "javascript-obfuscator": "^5.8.0"
+  }
+}

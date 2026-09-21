@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build Outputs
+dist/
+dist-build-staging/
+
+# User Data & Private Profiles (Bảo mật thông tin người dùng)
+profiles_data/
+app_data/
+test_custom_storage/
+test_tmp_gpmapi/
+
+# Chromium Driver Binaries (> 100MB, vượt quá giới hạn GitHub)
+drivers/
+temp_download_*
+*.7z
+*.zip
+
+# Environment & Sensitive Keys
+.env
+*.env.local
+
+# Admin Key Generation Tools (Không chia sẻ ra ngoài)
+licenseGen.js
+Tao_Key_Admin.bat
+
+# Logs & Temporary Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+Thumbs.db
+Desktop.ini
+.DS_Store

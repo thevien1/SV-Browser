@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SV Browser - Profile & Automation Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Component: Custom Titlebar -->
+  <div id="titlebar"></div>
+
+  <!-- App Layout -->
+  <div id="app-container">
+    <!-- Component: Sidebar -->
+    <aside id="sidebar"></aside>
+
+    <!-- Main Content Area -->
+    <main id="main-content">
+      <!-- Breadcrumb Header -->
+      <div class="content-header">
+        <div class="tab-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span id="current-view-title">Quản lý Profile</span>
+        </div>
+        <div class="header-tools">
+        </div>
+      </div>
+
+      <!-- Component: Profiles View -->
+      <div id="view-profiles" class="app-tab-view"></div>
+
+      <!-- Component: Proxy View -->
+      <div id="view-proxy" class="app-tab-view" style="display: none; height: 100%; flex-direction: column;"></div>
+
+      <!-- Component: Trash View -->
+      <div id="view-trash" class="app-tab-view" style="display: none; height: 100%; flex-direction: column;"></div>
+
+      <!-- Component: Settings View -->
+      <div id="view-settings" class="app-tab-view" style="display: none; padding: 24px 32px; overflow-y: auto;"></div>
+
+      <!-- Component: Groups View -->
+      <div id="view-groups" class="app-tab-view" style="display: none; height: 100%; flex-direction: column;"></div>
+
+      <!-- Component: Extensions View -->
+      <div id="view-extensions" class="app-tab-view" style="display: none; height: 100%; flex-direction: column;"></div>
+
+      <!-- Component: Placeholder View -->
+      <div id="view-placeholder" class="app-tab-view" style="display: none;"></div>
+    </main>
+  </div>
+
+  <!-- Component: Modals Container -->
+  <div id="modals-container"></div>
+
+  <!-- Main Controller (ES Module) -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
