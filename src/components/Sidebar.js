@@ -23,6 +23,7 @@ export class SidebarComponent {
 
     this.container.innerHTML = `
       <div class="sidebar-brand">
+        <img src="../assets/icon.png" class="brand-icon" alt="SV Browser" style="width: 28px; height: 28px; border-radius: 7px; object-fit: contain; box-shadow: 0 2px 8px rgba(6, 182, 212, 0.35);">
         <div class="logo-text">SV <span>BROWSER</span></div>
       </div>
 

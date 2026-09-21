@@ -110,11 +110,10 @@ async function run() {
   // Đảm bảo icon app tồn tại
   const iconPath = path.join(rootDir, 'assets', 'icon.ico');
   if (!fs.existsSync(iconPath)) {
-    const fallbackIco = path.join(rootDir, 'drivers', 'ChromiumCore_v151', 'Chrome-bin', 'logo.ico');
-    if (fs.existsSync(fallbackIco)) {
-      fs.mkdirSync(path.join(rootDir, 'assets'), { recursive: true });
-      fs.copyFileSync(fallbackIco, iconPath);
-    }
+    console.log('  -> Đang tạo lại icon SV Browser từ script make_icon.ps1...');
+    try {
+      require('child_process').execSync('powershell -ExecutionPolicy Bypass -File scripts\\make_icon.ps1', { cwd: rootDir });
+    } catch (e) {}
   }
 
   // 2. Danh sách các file backend Node.js cần mã hóa
@@ -179,6 +178,12 @@ async function run() {
     if (fs.existsSync(src)) {
       fs.copyFileSync(src, path.join(stagingDir, hf));
     }
+  }
+
+  // Sao chép assets (icon.ico, icon.png)
+  const assetsDir = path.join(rootDir, 'assets');
+  if (fs.existsSync(assetsDir)) {
+    copyDirRecursive(assetsDir, path.join(stagingDir, 'assets'));
   }
 
   // Tạo package.json sạch cho ứng dụng (chỉ chứa metadata cần thiết, không lộ keygen hay devDependencies)
